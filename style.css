@@ -142,6 +142,12 @@ h1 { font-size: 1.6rem; margin: 16px 0; text-align: center; }
     font-weight: bold;
 }
 
+.quiz-list-item .score-info {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-left: 8px;
+}
+
 .delete-btn {
     background: none;
     border: none;
@@ -228,6 +234,12 @@ h1 { font-size: 1.6rem; margin: 16px 0; text-align: center; }
 .dark-mode .progress .answered { background: #4f46e5; border-color: #a78bfa; color: white; }
 .light-mode .progress .answered { background: #c4b5fd; border-color: #7c3aed; color: #1e293b; }
 
+.progress .doubt {
+    background: #ef4444 !important;
+    color: white !important;
+    border-color: #b91c1c !important;
+}
+
 .story-btn {
     display: block;
     margin: 16px auto;
@@ -242,10 +254,31 @@ h1 { font-size: 1.6rem; margin: 16px 0; text-align: center; }
 .dark-mode .story-btn { background: #6d28d9; }
 .light-mode .story-btn { background: #8b5cf6; }
 
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0;
+}
+
+.doubt-btn {
+    padding: 10px 24px;
+    font-size: 15px;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    background: #f59e0b;
+    color: white;
+    font-weight: 600;
+}
+
+.doubt-btn.active {
+    background: #dc2626;
+}
+
 #question-text {
     font-size: 1.1rem;
     line-height: 1.6;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 #options-form {
@@ -400,14 +433,4 @@ h1 { font-size: 1.6rem; margin: 16px 0; text-align: center; }
 #help-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-body.no-quiz #quiz-title,
-body.no-quiz .main-content,
-body.no-quiz .navigation,
-body.no-quiz #help-btn,
-body.no-quiz .question-info,
-body.no-quiz #story-btn,
-body.no-quiz #shuffle-questions-btn {
-    display: none;
 }

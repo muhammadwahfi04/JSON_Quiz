@@ -2,6 +2,7 @@ let quizData = null;
 let currentQuestion = 0;
 let score = 0;
 let answers = [];
+let doubts = [];
 let shuffledQuestionOrder = null;
 let isShuffled = false;
 let savedQuizzes = [];
@@ -10,6 +11,7 @@ let currentQuizIndex = -1;
 // Elemen DOM
 const importBtn          = document.getElementById('import-btn');
 const shuffleBtn         = document.getElementById('shuffle-questions-btn');
+const doubtBtn           = document.getElementById('doubt-btn');
 const fileInput          = document.getElementById('json-file-input');
 const fileStatus         = document.getElementById('file-status');
 const quizTitle          = document.getElementById('quiz-title');
@@ -33,28 +35,39 @@ const closeStory         = document.getElementById('close-story');
 const themeToggle        = document.getElementById('theme-toggle');
 const toggleProgressBtn  = document.getElementById('toggle-progress');
 const quizListDiv        = document.getElementById('quiz-list');
+const clickSound         = document.getElementById('click-sound');
+const successSound       = document.getElementById('success-sound');
 const body               = document.body;
+
+// Play sound klik
+function playClick() {
+    clickSound.currentTime = 0;
+    clickSound.play().catch(() => {});
+}
+
+// Play sound success saat selesai
+function playSuccess() {
+    successSound.currentTime = 0;
+    successSound.play().catch(() => {});
+}
 
 // Inisialisasi modal
 resultModal.classList.add('hidden');
 storyModal.classList.add('hidden');
 
-// Load saved quizzes dari localStorage saat halaman dibuka
+// Load saved quizzes
 function loadSavedQuizzes() {
     const saved = localStorage.getItem('savedQuizzes');
     if (saved) {
         savedQuizzes = JSON.parse(saved);
         renderQuizList();
-        // Jika ada kuis tersimpan, load yang terakhir secara otomatis
         if (savedQuizzes.length > 0) {
             loadQuizFromSaved(savedQuizzes.length - 1);
         }
-    } else {
-        resetUI();
     }
 }
 
-// Render daftar kuis
+// Render daftar kuis + skor
 function renderQuizList() {
     quizListDiv.innerHTML = '';
     if (savedQuizzes.length === 0) {
@@ -65,12 +78,17 @@ function renderQuizList() {
     savedQuizzes.forEach((quiz, index) => {
         const item = document.createElement('div');
         item.className = 'quiz-list-item' + (currentQuizIndex === index ? ' active' : '');
+        let scoreText = '';
+        if (quiz.score) {
+            scoreText = `<span class="score-info">(Benar: ${quiz.score.benar} | Salah: ${quiz.score.salah} | Total: ${quiz.score.total})</span>`;
+        }
         item.innerHTML = `
-            <span>${quiz.name}</span>
+            <span>${quiz.name}${scoreText}</span>
             <button class="delete-btn" title="Hapus kuis" data-index="${index}">×</button>
         `;
 
         item.querySelector('span').addEventListener('click', () => {
+            playClick();
             loadQuizFromSaved(index);
             document.querySelectorAll('.quiz-list-item').forEach(el => el.classList.remove('active'));
             item.classList.add('active');
@@ -78,6 +96,7 @@ function renderQuizList() {
 
         item.querySelector('.delete-btn').addEventListener('click', (e) => {
             e.stopPropagation();
+            playClick();
             if (confirm(`Hapus "${quiz.name}"?`)) {
                 savedQuizzes.splice(index, 1);
                 localStorage.setItem('savedQuizzes', JSON.stringify(savedQuizzes));
@@ -94,11 +113,13 @@ function renderQuizList() {
 
 // Load kuis dari saved
 function loadQuizFromSaved(index) {
+    playClick();
     const selected = savedQuizzes[index];
     quizData = selected.data;
     currentQuestion = 0;
     score = 0;
     answers = new Array(quizData.quizList.length).fill(null);
+    doubts = selected.doubts ? [...selected.doubts] : new Array(quizData.quizList.length).fill(false);
     isShuffled = false;
     shuffledQuestionOrder = null;
     currentQuizIndex = index;
@@ -112,13 +133,31 @@ function loadQuizFromSaved(index) {
 
 // Simpan kuis baru
 function saveQuizToStorage(fileName, data) {
-    const newQuiz = { name: fileName, data };
+    const newQuiz = { name: fileName, data, doubts: new Array(data.quizList.length).fill(false) };
     const existingIndex = savedQuizzes.findIndex(q => q.name === fileName);
     if (existingIndex !== -1) {
-        savedQuizzes[existingIndex] = newQuiz;
+        savedQuizzes[existingIndex] = { ...savedQuizzes[existingIndex], data, doubts: savedQuizzes[existingIndex].doubts || new Array(data.quizList.length).fill(false) };
     } else {
         savedQuizzes.push(newQuiz);
     }
+    localStorage.setItem('savedQuizzes', JSON.stringify(savedQuizzes));
+    renderQuizList();
+}
+
+// Simpan status ragu
+function saveDoubts() {
+    if (currentQuizIndex === -1) return;
+    savedQuizzes[currentQuizIndex].doubts = [...doubts];
+    localStorage.setItem('savedQuizzes', JSON.stringify(savedQuizzes));
+}
+
+// Simpan skor
+function saveScoreToQuiz() {
+    if (currentQuizIndex === -1) return;
+    const total = quizData.quizList.length;
+    const benar = score;
+    const salah = total - score;
+    savedQuizzes[currentQuizIndex].score = { benar, salah, total };
     localStorage.setItem('savedQuizzes', JSON.stringify(savedQuizzes));
     renderQuizList();
 }
@@ -139,6 +178,7 @@ function resetUI() {
     resultModal.classList.add('hidden');
     storyModal.classList.add('hidden');
     shuffleBtn.classList.add('hidden');
+    doubtBtn.classList.add('hidden');
     isShuffled = false;
     shuffledQuestionOrder = null;
     currentQuizIndex = -1;
@@ -147,13 +187,17 @@ function resetUI() {
 
 // Toggle theme
 themeToggle.addEventListener('click', () => {
+    playClick();
     body.classList.toggle('dark-mode');
     body.classList.toggle('light-mode');
     themeToggle.textContent = body.classList.contains('dark-mode') ? '☀️' : '🌙';
 });
 
 // Import JSON
-importBtn.addEventListener('click', () => fileInput.click());
+importBtn.addEventListener('click', () => {
+    playClick();
+    fileInput.click();
+});
 
 fileInput.addEventListener('change', e => {
     const file = e.target.files[0];
@@ -176,9 +220,9 @@ fileInput.addEventListener('change', e => {
             currentQuestion = 0;
             score = 0;
             answers = new Array(quizData.quizList.length).fill(null);
+            doubts = new Array(quizData.quizList.length).fill(false);
             shuffleBtn.classList.remove('hidden');
 
-            // Simpan permanen
             saveQuizToStorage(file.name, data);
 
             body.classList.remove('no-quiz');
@@ -194,6 +238,7 @@ fileInput.addEventListener('change', e => {
 
 // Tombol Acak Soal
 shuffleBtn.addEventListener('click', () => {
+    playClick();
     if (!quizData) return;
 
     shuffledQuestionOrder = [...Array(quizData.quizList.length).keys()];
@@ -204,6 +249,21 @@ shuffleBtn.addEventListener('click', () => {
     updateProgress();
 });
 
+// Tombol Ragu-ragu
+doubtBtn.addEventListener('click', () => {
+    playClick();
+    if (!quizData) return;
+
+    const realIndex = getCurrentQuestionIndex();
+    doubts[realIndex] = !doubts[realIndex];
+
+    doubtBtn.classList.toggle('active', doubts[realIndex]);
+    doubtBtn.textContent = doubts[realIndex] ? 'Batal Ragu' : 'Ragu-ragu';
+
+    saveDoubts();
+    updateProgress();
+});
+
 // initQuiz
 function initQuiz() {
     quizTitle.textContent = "Vocabulary dari Story";
@@ -211,12 +271,14 @@ function initQuiz() {
     totalQuestions.textContent = `/ ${quizData.quizList.length}`;
     storyBtn.classList.remove('hidden');
     helpBtn.disabled = false;
+    doubtBtn.classList.remove('hidden');
 
     progressDiv.innerHTML = '';
     for (let i = 0; i < quizData.quizList.length; i++) {
         const span = document.createElement('span');
         span.textContent = i + 1;
         span.addEventListener('click', () => {
+            playClick();
             currentQuestion = i;
             loadQuestion();
         });
@@ -261,6 +323,7 @@ function loadQuestion() {
         radio.disabled = answers[realIndex] !== null;
 
         radio.addEventListener('change', () => {
+            playClick(); // SUARA KLIK SAAT PILIH JAWABAN
             if (answers[realIndex] !== null) return;
 
             answers[realIndex] = item.originalIndex;
@@ -293,6 +356,9 @@ function loadQuestion() {
         showExplanation(q.answer);
     }
 
+    doubtBtn.classList.toggle('active', doubts[realIndex]);
+    doubtBtn.textContent = doubts[realIndex] ? 'Batal Ragu' : 'Ragu-ragu';
+
     updateProgress();
     updateButtons();
 }
@@ -313,11 +379,13 @@ function updateProgress() {
         span.classList.toggle('current', i === currentQuestion);
         const realIdx = isShuffled ? shuffledQuestionOrder[i] : i;
         span.classList.toggle('answered', answers[realIdx] !== null);
+        span.classList.toggle('doubt', doubts[realIdx]);
     });
 }
 
 // Navigasi
 nextBtn.addEventListener('click', () => {
+    playClick();
     if (!quizData) return;
 
     const max = isShuffled ? shuffledQuestionOrder.length : quizData.quizList.length;
@@ -325,6 +393,16 @@ nextBtn.addEventListener('click', () => {
         currentQuestion++;
         loadQuestion();
     } else {
+        // Validasi semua soal dijawab
+        const unanswered = answers.filter(a => a === null).length;
+        if (unanswered > 0) {
+            alert(`Masih ada ${unanswered} soal yang belum dijawab! Harap selesaikan semua terlebih dahulu.`);
+            return;
+        }
+
+        saveScoreToQuiz();
+        saveDoubts();
+
         const total = quizData.quizList.length;
         const salah = total - score;
         resultText.innerHTML = `
@@ -334,10 +412,12 @@ nextBtn.addEventListener('click', () => {
             ${score === total ? "Sempurna! 🌟" : "Bagus! Lanjut lagi ya 💪"}
         `;
         resultModal.classList.remove('hidden');
+        playSuccess(); // SUARA SELAMAT / SUCCESS
     }
 });
 
 prevBtn.addEventListener('click', () => {
+    playClick();
     if (currentQuestion > 0) {
         currentQuestion--;
         loadQuestion();
@@ -345,6 +425,7 @@ prevBtn.addEventListener('click', () => {
 });
 
 helpBtn.addEventListener('click', () => {
+    playClick();
     if (quizData) {
         const realIndex = getCurrentQuestionIndex();
         showExplanation(quizData.quizList[realIndex].answer);
@@ -352,7 +433,10 @@ helpBtn.addEventListener('click', () => {
 });
 
 // Modal Story
-storyBtn.addEventListener('click', () => storyModal.classList.remove('hidden'));
+storyBtn.addEventListener('click', () => {
+    playClick();
+    storyModal.classList.remove('hidden');
+});
 closeStory.addEventListener('click', () => storyModal.classList.add('hidden'));
 storyModal.addEventListener('click', e => { if (e.target === storyModal) storyModal.classList.add('hidden'); });
 
@@ -363,11 +447,12 @@ resultModal.addEventListener('click', e => { if (e.target === resultModal) resul
 // Toggle progress
 let isProgressVisible = true;
 toggleProgressBtn.addEventListener('click', () => {
+    playClick();
     isProgressVisible = !isProgressVisible;
     progressDiv.style.display = isProgressVisible ? 'flex' : 'none';
     toggleProgressBtn.textContent = isProgressVisible ? '−' : '+';
     toggleProgressBtn.title = isProgressVisible ? 'Sembunyikan daftar soal' : 'Tampilkan daftar soal';
 });
 
-// Load daftar kuis tersimpan saat halaman dibuka
+// Load daftar kuis tersimpan
 loadSavedQuizzes();
