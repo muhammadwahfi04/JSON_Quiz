@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Quiz</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <header>
+        <div class="header-content">
+            <h1>Vocabulary Quiz</h1>
+            <button id="theme-toggle" title="Ganti Tema">☀️</button>
+        </div>
+    </header>
+
+    <div class="quiz-container">
+        <div class="quiz-selector">
+            <button id="import-btn">Import JSON Baru</button>
+            <p id="file-status">Pilih kuis dari daftar kiri atau import baru</p>
+            <input type="file" id="json-file-input" accept=".json" style="display: none;">
+        </div>
+
+        <h1 id="quiz-title">Quiz Title</h1>
+
+        <div class="main-content">
+            <aside class="quiz-list-sidebar">
+                <div class="sidebar-header">
+                    <h3>Daftar Kuis Tersimpan</h3>
+                </div>
+                <div id="quiz-list" class="quiz-list"></div>
+            </aside>
+
+            <div class="question-section">
+                <div class="question-info">
+                    <span id="question-number">Question 1</span>
+                    <span id="total-questions">/ 0</span>
+                    <button id="help-btn" disabled>Need Help?</button>
+                </div>
+
+                <button id="story-btn" class="story-btn hidden">Baca Story</button>
+
+                <p id="question-text">Pilih kuis dari daftar di kiri atau import JSON untuk memulai...</p>
+
+                <form id="options-form"></form>
+
+                <div id="feedback" class="hidden"></div>
+
+                <div id="explanation" class="hidden"></div>
+
+                <div class="navigation">
+                    <button id="prev-btn" disabled>Prev</button>
+                    <button id="next-btn" disabled>Next</button>
+                </div>
+            </div>
+
+            <aside class="progress-sidebar">
+                <div class="sidebar-header">
+                    <h3>Soal</h3>
+                    <button id="shuffle-questions-btn" class="shuffle-btn hidden" title="Acak Urutan Soal">🔀</button>
+                    <button id="toggle-progress" class="toggle-btn" title="Sembunyikan daftar soal">−</button>
+                </div>
+                <div class="progress" id="progress-bubbles"></div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modal Story -->
+    <div id="story-modal" class="modal hidden">
+        <div class="modal-content">
+            <span id="close-story" class="close">×</span>
+            <h2>Story Vocabulary</h2>
+            <div id="story-content" class="story-full"></div>
+        </div>
+    </div>
+
+    <!-- Modal Hasil -->
+    <div id="result-modal" class="modal hidden">
+        <div class="modal-content">
+            <span id="close-result" class="close">×</span>
+            <h2>Hasil Quiz</h2>
+            <p id="result-text"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
